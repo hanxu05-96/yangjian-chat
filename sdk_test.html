@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Web SDK 测试</title>
+<style>
+* { box-sizing: border-box; }
+html { margin: 0; height: 100%; }
+body { margin: 0; padding: 8px; height: 100%; }
+</style>
+</head>
+<body>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/latest/coze/web-sdk/dist/js-umd/index.min.js"></script>
+<script>
+cozeWebSDK.init({
+  projectId: '7673325558071164955',
+  refreshToken: () => Promise.resolve("eyJhbGciOiJSUzI1NiIsImtpZCI6ImMxZWVlOGViLTk3ZmYtNDc3Yi1iODUxLTcwYTgzNzk4YjczZSJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbInRHaElZUjl4T1RQRDdGam1ydzBwOHBzcUpDV0VIN1hrIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzg2ODAwNjEyLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjczMzM4NTQ2ODE5Njk0NjAyIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3Njc0MjUwMTkzNDU3MzgxMzk1In0.MjriG-hzl3hqWrGQRQlFRCXO8zoCZU0oG1u72eK1okt8flcH8pzbJVLVMNwdDE3nj12DQyvHJFNwDqOXifeM1GwQEEjEjxfMK1DiqvXUS16AL-21TcYN7WecN9Q4XCzsxCq99fPiaUjn5Nn2o2BGJhZPoogYVmEV9SototEkjD00AKw-Auu3pX6-76vKgc6T1hOIJzbJqISEQk_yR5njVab0ZJZ-t9aG498sfhAQJk8O0EjQIwExMVkHBj_m5oQWLrsUIbPr6Kr_l3UWRM_FpirNHiNHV_eYMNdSBYwW6sUpKvUtDIAJx2iFdBIe2N7gyW2hEVSgqtzRdiIjOav0Mg"),
+  style: "width: 100%; height: 96vh; border: 1px solid #e5e7eb; border-radius: 8px;"
+});
+</script>
+</body>
+</html>
