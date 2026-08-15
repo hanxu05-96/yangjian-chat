@@ -189,13 +189,12 @@ body {
 
 <script>
 // ========== 配置 ==========
-const BOT_ID = "7672407041574928427";
-const API_URL = "https://api.coze.cn/v3/chat";
-const TOKEN = "pat_SOwAKzzh3gSxm1Nxag0CRbZHKyWUV2dcWpQoEeLNIOVgyjHK88FqK8zTOO44cXJk";
+const API_URL = "https://kzzkc88mx2.coze.site/stream_run";
+const PROJECT_ID = 7673325558071164955;
+const TOKEN = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImMxZWVlOGViLTk3ZmYtNDc3Yi1iODUxLTcwYTgzNzk4YjczZSJ9.eyJpc3MiOiJodHRwczovL2FwaS5jb3plLmNuIiwiYXVkIjpbInRHaElZUjl4T1RQRDdGam1ydzBwOHBzcUpDV0VIN1hrIl0sImV4cCI6ODIxMDI2Njg3Njc5OSwiaWF0IjoxNzg2ODAwNjEyLCJzdWIiOiJzcGlmZmU6Ly9hcGkuY296ZS5jbi93b3JrbG9hZF9pZGVudGl0eS9pZDo3NjczMzM4NTQ2ODE5Njk0NjAyIiwic3JjIjoiaW5ib3VuZF9hdXRoX2FjY2Vzc190b2tlbl9pZDo3Njc0MjUwMTkzNDU3MzgxMzk1In0.MjriG-hzl3hqWrGQRQlFRCXO8zoCZU0oG1u72eK1okt8flcH8pzbJVLVMNwdDE3nj12DQyvHJFNwDqOXifeM1GwQEEjEjxfMK1DiqvXUS16AL-21TcYN7WecN9Q4XCzsxCq99fPiaUjn5Nn2o2BGJhZPoogYVmEV9SototEkjD00AKw-Auu3pX6-76vKgc6T1hOIJzbJqISEQk_yR5njVab0ZJZ-t9aG498sfhAQJk8O0EjQIwExMVkHBj_m5oQWLrsUIbPr6Kr_l3UWRM_FpirNHiNHV_eYMNdSBYwW6sUpKvUtDIAJx2iFdBIe2N7gyW2hEVSgqtzRdiIjOav0Mg";
 
 // ========== 状态 ==========
 let sessionId = null;
-let conversationId = null;
 let isStreaming = false;
 
 // ========== 工具函数 ==========
@@ -310,15 +309,16 @@ async function sendMessage() {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        bot_id: BOT_ID,
-        user_id: sessionId,
-        stream: true,
-        auto_save_history: true,
-        additional_messages: [{
-          role: "user",
-          content: content,
-          content_type: "text"
-        }]
+        content: {
+          query: {
+            prompt: [
+              { type: "text", content: { text: content } }
+            ]
+          }
+        },
+        type: "query",
+        session_id: sessionId,
+        project_id: PROJECT_ID
       })
     });
 
@@ -337,13 +337,16 @@ async function sendMessage() {
     const decoder = new TextDecoder();
     let botContent = "";
     let botMsgDiv = null;
+    let buffer = "";
+    let hasError = false;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const text = decoder.decode(value, { stream: true });
-      const lines = text.split("\n");
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split("\n");
+      buffer = lines.pop(); // 最后一段可能不完整，留到下一轮
 
       for (const line of lines) {
         if (!line.startsWith("data:")) continue;
@@ -353,16 +356,22 @@ async function sendMessage() {
         try {
           const data = JSON.parse(dataStr);
 
-          // 获取 conversation_id
-          if (data.conversation_id) {
-            conversationId = data.conversation_id;
+          // 错误事件
+          if (data.type === "error" || (data.content && data.content.error)) {
+            const errObj = data.content && data.content.error;
+            hasError = true;
+            if (!botMsgDiv) {
+              botMsgDiv = addBotMessagePlaceholder();
+            }
+            botMsgDiv.querySelector(".bubble").innerHTML =
+              "⚠️ 智能体服务异常，请稍后再试。" + (errObj && errObj.message ? "（" + errObj.message + "）" : "");
+            scrollToBottom();
+            continue;
           }
 
-          // 提取消息内容
-          if (data.type === "answer" && data.content) {
-            botContent += data.content;
-          } else if (data.content) {
-            botContent += data.content;
+          // 提取回复增量（stream_run 格式：type=answer, content.answer 为片段）
+          if (data.type === "answer" && data.content && data.content.answer) {
+            botContent += data.content.answer;
           }
 
           // 更新或创建 bot 消息气泡
@@ -380,7 +389,7 @@ async function sendMessage() {
     }
 
     // 如果没有收到任何内容
-    if (!botContent.trim()) {
+    if (!botContent.trim() && !hasError) {
       addMessage("bot", "（未收到回复内容）");
     }
 
