@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Web SDK 测试 PAT1</title>
+<style>
+* { box-sizing: border-box; }
+html { margin: 0; height: 100%; }
+body { margin: 0; padding: 8px; height: 100%; }
+</style>
+</head>
+<body>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/latest/coze/web-sdk/dist/js-umd/index.min.js"></script>
+<script>
+cozeWebSDK.init({
+  projectId: '7673325558071164955',
+  refreshToken: () => Promise.resolve("pat_SOwAKzzh3gSxm1Nxag0CRbZHKyWUV2dcWpQoEeLNIOVgyjHK88FqK8zTOO44cXJk"),
+  style: "width: 100%; height: 96vh; border: 1px solid #e5e7eb; border-radius: 8px;"
+});
+</script>
+</body>
+</html>
