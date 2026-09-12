@@ -41,6 +41,12 @@ body {
 }
 .modal .btn:hover { background: #3b5de7; }
 .modal .error { color: #e74c3c; font-size: 13px; text-align: center; margin-top: 8px; display: none; }
+.modal .guest-hint {
+  font-size: 12px; color: #9a6b00; text-align: center;
+  background: #fff8e1; border: 1px solid #ffe082;
+  border-radius: 8px; padding: 8px 10px; margin-top: 14px;
+  line-height: 1.5;
+}
 
 /* ===== 主页面 ===== */
 .page {
@@ -90,6 +96,7 @@ body {
     <label for="stuName">姓名拼音缩写</label>
     <input type="text" id="stuName" placeholder="例：zs（张三）" maxlength="6" autocomplete="off">
     <button class="btn" id="startBtn">开始对话</button>
+    <p class="guest-hint">💡 评审 / 访客体验：可直接输入任意编号（如 99）与拼音缩写进入对话</p>
     <p class="error" id="modalError">请填写完整信息</p>
   </div>
 </div>
@@ -131,7 +138,9 @@ const page = document.getElementById("page");
 function enterChat() {
   document.getElementById("userInfo").textContent = "👤 " + stuId + " · " + stuName;
   document.getElementById("noticeText").innerHTML =
-    "📌 本页每次重新打开都会开始新对话。请先在下方输入框发送：<b>我是" + stuId + "号学生" + stuName + "</b>，等炀鉴回应后再开始提问。";
+    stuId === "99"
+      ? "🎯 访客模式：可直接在下方输入框提问，例如「隋炀帝三征高句丽，《隋书》与《三国史记》的记载有何差异？」"
+      : "📌 本页每次重新打开都会开始新对话。请先在下方输入框发送：<b>我是" + stuId + "号学生" + stuName + "</b>，等炀鉴回应后再开始提问。";
   modal.style.display = "none";
   page.style.display = "flex";
   sessionStorage.removeItem("yj_notice_done");
