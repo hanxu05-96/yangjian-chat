@@ -78,6 +78,16 @@ body {
   font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer;
   white-space: nowrap;
 }
+.retry-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 2000;
+  display: none; align-items: center; justify-content: center; gap: 10px;
+  background: #fff3cd; border-bottom: 1px solid #ffc107;
+  color: #856404; font-size: 13px; padding: 10px 14px; line-height: 1.5;
+}
+.retry-bar .rb-btn {
+  border: none; background: #ff9800; color: #fff; font-size: 13px;
+  padding: 6px 14px; border-radius: 6px; cursor: pointer; white-space: nowrap;
+}
 #sdk-container {
   flex: 1; min-height: 0;
   width: 100%;
@@ -85,6 +95,9 @@ body {
 </style>
 </head>
 <body>
+
+<!-- 加载失败重试条 -->
+<div class="retry-bar" id="retryBar"></div>
 
 <!-- 身份弹窗 -->
 <div class="modal-overlay" id="modal">
@@ -114,19 +127,53 @@ body {
   <div id="sdk-container"></div>
 </div>
 
-<script src="https://lf-cdn.coze.cn/obj/unpkg/latest/coze/web-sdk/dist/js-umd/index.min.js"></script>
+<script src="https://lf-cdn.coze.cn/obj/unpkg/latest/coze/web-sdk/dist/js-umd/index.min.js" onerror="window.__sdkLoadError=true"></script>
 <script>
 // ===== 配置 =====
 const PROJECT_ID = "7673325558071164955";
 const SAT_TOKEN = "sat_7oS29ZulvUD1fiVRhoo4bEz2PWifhtkAUyzY3a5ZnQofcAaab61aoR6A9eyjMJ0p";
 
-// ===== Web SDK 初始化（页面加载即后台启动，聊天区显示时已就绪）=====
-cozeWebSDK.init({
-  projectId: PROJECT_ID,
-  refreshToken: () => Promise.resolve(SAT_TOKEN),
-  container: document.getElementById("sdk-container"),
-  style: "width: 100%; height: 100%; border: none;"
-});
+// ===== SDK 加载兜底（防白屏：失败自动重试，超2次转手动）=====
+const SDK_RETRY_MAX = 2;
+function sdkRetryCount() { return +(sessionStorage.getItem("yj_sdk_retry") || 0); }
+function showRetryBar(reason) {
+  const bar = document.getElementById("retryBar");
+  if (!bar) return;
+  bar.innerHTML = "⚠️ " + (reason || "聊天组件加载失败") + "，可能因网络波动 <button class='rb-btn' onclick='location.reload()'>点击重试</button>";
+  bar.style.display = "flex";
+}
+function sdkRetry(reason) {
+  if (sdkRetryCount() < SDK_RETRY_MAX) {
+    sessionStorage.setItem("yj_sdk_retry", sdkRetryCount() + 1);
+    setTimeout(() => location.reload(), 1200);
+  } else {
+    showRetryBar(reason);
+  }
+}
+
+if (window.__sdkLoadError) {
+  sdkRetry("聊天服务连接失败");
+} else if (typeof cozeWebSDK !== "undefined") {
+  // ===== Web SDK 初始化（页面加载即后台启动，聊天区显示时已就绪）=====
+  cozeWebSDK.init({
+    projectId: PROJECT_ID,
+    refreshToken: () => Promise.resolve(SAT_TOKEN),
+    container: document.getElementById("sdk-container"),
+    style: "width: 100%; height: 100%; border: none;"
+  });
+  // 成功检测：20s 内聊天 iframe 渲染成功则清除重试计数，否则自动重试
+  window.addEventListener("load", () => {
+    setTimeout(() => {
+      if (document.querySelector("#sdk-container iframe")) {
+        sessionStorage.removeItem("yj_sdk_retry");
+      } else {
+        sdkRetry("聊天组件未能及时加载");
+      }
+    }, 20000);
+  });
+} else {
+  sdkRetry("聊天服务加载失败");
+}
 
 // ===== 身份状态 =====
 let stuId = localStorage.getItem("yj_stu_id") || "";
